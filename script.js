@@ -1,96 +1,124 @@
-/*
-=======================================
-📘 JavaScript & Web APIs Lab
-All tasks in one file (script.js)
-=======================================
-*/
+// script.js
 
-/*  
-=======================================
-TODO1: Welcome Board
----------------------------------------
-When the page loads, display a welcome message 
-inside the <p> element with id="t1-msg".
-
-✅ Task:
-- Select the element with id "t1-msg".
-- Change its text to "Hello, World!".
-
-💡 Hint:
-document.getElementById("t1-msg").innerHTML = "Hello, World!";
-*/
- 
-
-/*  
-=======================================
-TODO2: Interaction Corner
----------------------------------------
-There is a button with id="t2-btn".
-When the button is clicked, change the text inside 
-the <p> with id="t2-status" to:
-    "You clicked the button!"
-
-✅ Task:
-- Get the button element.
-- Add a click event listener.
-- Inside the event, change the text of the status paragraph.
-
-💡 Hint:
-button.addEventListener("click", function () {
-    // change text here
-});
-*/
- 
-
-/*  
-=======================================
-TODO3: Inspiring Quote Board
----------------------------------------
-Use the Quotable API to display a random quote.
-
-🌍 API Link:
-https://dummyjson.com/quotes/random
-
-✅ Task:
-- When the button with id="t3-loadQuote" is clicked:
-    - Fetch a random quote from the API.
-    - Display the quote text inside the <p> with id="t3-quote".
-    - Display the author inside the <p> with id="t3-author".
-
-💡 Hint:
-The API returns JSON like:
-{
-  "content": "Do not watch the clock. Do what it does. Keep going.",
-  "author": "Sam Levenson"
+// ============= Helpers =============
+function byId(id) {
+    return document.getElementById(id);
 }
 
-Use:
-data.content   // the quote text
-data.author    // the author
-*/
- 
+function setText(id, text) {
+    const el = byId(id);
+    if (el) el.textContent = text;
+}
 
-/*  
-=======================================
-TODO4: Dammam Weather Now
----------------------------------------
-Use the OpenWeatherMap API to display live weather data.
+function safeNumber(n, fallback = "—") {
+    return typeof n === "number" && !Number.isNaN(n) ? n : fallback;
+}
 
-🌍 API Link:
-https://api.openweathermap.org/data/2.5/weather?q=Dammam&appid=API_KEY=metric
+async function fetchJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+}
 
-⚠️ Replace YOUR_API_KEY with your actual API key from:
-https://openweathermap.org/api
+// ============= Main =============
+document.addEventListener("DOMContentLoaded", function () {
+    setText("t1-msg", "Hello, Everyone!");
 
-✅ Task:
-- When the button with id="t4-loadWx" is clicked:
-    - Fetch current weather data for Dammam.
-    - Show temperature in the element with id="t4-temp".
-    - Show humidity in the element with id="t4-hum".
-    - Show wind speed in the element with id="t4-wind".
+    const t2Btn = byId("t2-btn");
+    if (t2Btn) {
+        t2Btn.addEventListener("click", function () {
+            setText("t2-status", "Do it now. Sometimes later becomes never.” — Afrah");
+        });
+    }
 
-💡 Hint:
-data.main.temp      → temperature (°C)
-data.main.humidity  → humidity (%)
-data.wind.speed     → wind speed (m/s)
-*/
+    const quoteBtn = byId("t3-loadQuote");
+    const quoteEl = byId("t3-quote");
+    const authorEl = byId("t3-author");
+
+    setText("t3-quote", "“Do it now Sometimes later becomes never.”");
+    setText("t3-author", "— Afrah");
+
+    async function loadQuote() {
+        if (!quoteBtn || !quoteEl || !authorEl) return;
+
+        quoteBtn.disabled = true;
+        const prevQuote = quoteEl.textContent;
+        const prevAuthor = authorEl.textContent;
+        quoteEl.textContent = "Loading…";
+        authorEl.textContent = "";
+
+        try {
+            const data = await fetchJSON("https://dummyjson.com/quotes/random");
+            const quote = data?.content || "Keep going. Keep growing.";
+            const author = data?.author || "Unknown";
+
+            quoteEl.textContent = `“${quote}”`;
+            authorEl.textContent = `— ${author}`;
+        } catch (err) {
+            quoteEl.textContent = "“Do it now. Sometimes later becomes never.”";
+            authorEl.textContent = "— Afrah";
+        } finally {
+            if (!quoteEl.textContent || quoteEl.textContent === "Loading…") {
+                quoteEl.textContent = prevQuote;
+                authorEl.textContent = prevAuthor;
+            }
+            quoteBtn.disabled = false;
+        }
+    }
+
+    if (quoteBtn) {
+        quoteBtn.addEventListener("click", loadQuote);
+    }
+
+    const wxBtn  = byId("t4-loadWx");
+    const tempEl = byId("t4-temp");
+    const humEl  = byId("t4-hum");
+    const windEl = byId("t4-wind");
+    const errEl  = byId("t4-err");
+
+    const OPENWEATHER_KEY = "d51f2f00c3b137ccfd135bd8f9dd50aa";
+
+    async function loadWeather() {
+        if (!wxBtn || !tempEl || !humEl || !windEl) return;
+
+        if (errEl) errEl.textContent = "";
+        wxBtn.disabled = true;
+        tempEl.textContent = "Loading…";
+        humEl.textContent  = "Loading…";
+        windEl.textContent = "Loading…";
+
+        const base  = "https://api.openweathermap.org/data/2.5/weather";
+        const city  = "Dammam";
+        const units = "metric";
+        const url   = `${base}?q=${encodeURIComponent(city)}&appid=${OPENWEATHER_KEY}&units=${units}`;
+
+        try {
+            const data = await fetchJSON(url);
+
+            const temp = safeNumber(data?.main?.temp);
+            const hum  = safeNumber(data?.main?.humidity);
+            const wind = safeNumber(data?.wind?.speed);
+
+            tempEl.textContent = temp === "—" ? "—" : `${temp.toFixed(1)} °C`;
+            humEl.textContent  = hum  === "—" ? "—" : `${hum} %`;
+            windEl.textContent = wind === "—" ? "—" : `${wind.toFixed(1)} m/s`;
+        } catch (err) {
+            const msg = String(err.message).includes("401")
+                ? "Invalid API key (HTTP 401). Please check your key."
+                : String(err.message).includes("404")
+                    ? "City not found (HTTP 404)."
+                    : "Could not load weather. Please try again.";
+
+            tempEl.textContent = "—";
+            humEl.textContent  = "—";
+            windEl.textContent = "—";
+            if (errEl) errEl.textContent = msg;
+        } finally {
+            wxBtn.disabled = false;
+        }
+    }
+
+    if (wxBtn) {
+        wxBtn.addEventListener("click", loadWeather);
+    }
+});
