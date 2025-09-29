@@ -1,6 +1,8 @@
 // script.js
 
-// ============= Helpers =============
+// =======================================
+// Helpers
+// =======================================
 function byId(id) {
     return document.getElementById(id);
 }
@@ -20,22 +22,38 @@ async function fetchJSON(url) {
     return res.json();
 }
 
-// ============= Main =============
+// =======================================
+// Main
+// =======================================
 document.addEventListener("DOMContentLoaded", function () {
+    /* -------------------------------------
+     * TODO1: Welcome Board
+     * - On load, put a greeting in #t1-msg
+     * ------------------------------------- */
     setText("t1-msg", "Hello, Everyone!");
 
     const t2Btn = byId("t2-btn");
     if (t2Btn) {
         t2Btn.addEventListener("click", function () {
-            setText("t2-status", "Do it now. Sometimes later becomes never.” — Afrah");
+            setText("t2-status", "You clicked the button!");
+            // If you want your personal quote here instead, replace the line above with:
+            // setText("t2-status", "“Do it now. Sometimes later becomes never.” — Afrah");
         });
     }
 
+    /* -------------------------------------
+     * TODO3: Inspiring Quote Board
+     * - Default to your quote on load
+     * - On #t3-loadQuote click, fetch a
+     *   random quote and author from API
+     *   (fallback to your quote on error)
+     * ------------------------------------- */
     const quoteBtn = byId("t3-loadQuote");
     const quoteEl = byId("t3-quote");
     const authorEl = byId("t3-author");
 
-    setText("t3-quote", "“Do it now Sometimes later becomes never.”");
+    // Default quote shown on page load
+    setText("t3-quote", "“Do it now. Sometimes later becomes never.”");
     setText("t3-author", "— Afrah");
 
     async function loadQuote() {
@@ -51,13 +69,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await fetchJSON("https://dummyjson.com/quotes/random");
             const quote = data?.content || "Keep going. Keep growing.";
             const author = data?.author || "Unknown";
-
             quoteEl.textContent = `“${quote}”`;
             authorEl.textContent = `— ${author}`;
         } catch (err) {
+            // Fallback to your quote on any error
             quoteEl.textContent = "“Do it now. Sometimes later becomes never.”";
             authorEl.textContent = "— Afrah";
         } finally {
+            // Safety: if something went wrong mid-way, restore previous
             if (!quoteEl.textContent || quoteEl.textContent === "Loading…") {
                 quoteEl.textContent = prevQuote;
                 authorEl.textContent = prevAuthor;
@@ -70,6 +89,14 @@ document.addEventListener("DOMContentLoaded", function () {
         quoteBtn.addEventListener("click", loadQuote);
     }
 
+    /* -------------------------------------
+     * TODO4: Dammam Weather Now
+     * - On #t4-loadWx click, fetch current
+     *   weather from OpenWeatherMap and show:
+     *   temp (°C), humidity (%), wind (m/s)
+     *   - Show friendly errors
+     *   - Disable button while loading
+     * ------------------------------------- */
     const wxBtn  = byId("t4-loadWx");
     const tempEl = byId("t4-temp");
     const humEl  = byId("t4-hum");
@@ -81,6 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
     async function loadWeather() {
         if (!wxBtn || !tempEl || !humEl || !windEl) return;
 
+        // UI: loading state
         if (errEl) errEl.textContent = "";
         wxBtn.disabled = true;
         tempEl.textContent = "Loading…";
@@ -94,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             const data = await fetchJSON(url);
-
             const temp = safeNumber(data?.main?.temp);
             const hum  = safeNumber(data?.main?.humidity);
             const wind = safeNumber(data?.wind?.speed);
@@ -108,7 +135,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 : String(err.message).includes("404")
                     ? "City not found (HTTP 404)."
                     : "Could not load weather. Please try again.";
-
             tempEl.textContent = "—";
             humEl.textContent  = "—";
             windEl.textContent = "—";
